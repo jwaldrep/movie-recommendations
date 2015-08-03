@@ -64,3 +64,5 @@ datasets
 
 # Project virtualenv
 recommend
+.direnv/
+.envrc
