@@ -1,0 +1,62 @@
+<!doctype html>
+<head>
+  <title>Movie Profile</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='sorttable.js') }}"></script>
+</head>
+<body>
+  <a href = "{{ url_for('index') }}">Home<a><p>
+  {% if movie %}
+    <h3>Movie Profile</h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>Title</h4></td>
+        <td><h4>IMDb Link</h4></td>
+        <td><h4>Release Date</h4></td>
+        <td><h4>Video Release Date</h4></td>
+        <td><h4>Genres</h4></td>
+      </tr>
+      <tr>
+        <td><a href="{{ url_for('show_movie', movie=movie) }}">{{ db.movies[movie].movie_title }} </a></td>
+        <td><a href="{{ db.movies[movie].IMDb_URL}}">IMDb Link (external)</a></td>
+        <td>{{ db.movies[movie].release_date }}</td>
+        <td>{{ db.movies[movie].video_release_date }}</td>
+        <td>{{ ', '.join(db.movies[movie].genres) }}</td>
+      </tr>
+    </table>
+
+
+    <h3>User Ratings: </h3>
+    <h4>Average Rating: {{db.movies[movie].avg_rating }}</h4>
+    <h4>Number of Ratings: {{db.movies[movie].num_ratings }}</h4>
+
+    <table class="sortable">
+      <tr>
+        <td><h4>User</h4></td>
+        <td><h4>Rating</h4></td>
+        <td><h4>Age</h4></td>
+        <td><h4>Gender</h4></td>
+        <td><h4>Job</h4></td>
+        <td><h4>Zipcode</h4></td>
+
+      {% for user,rating in db.movies[movie].ratings.items() %}
+        <tr>
+          <td><a href="{{ url_for('show_user_profile', user=user) }}">{{ user }}</td>
+          <td>{{ rating }}</td>
+          <td>{{ db.users[user].age }}</td>
+          <td>{{ db.users[user].gender }}</td>
+          <td>{{ db.users[user].job }}</td>
+          <td>{{ db.users[user].zipcode }}</td>
+
+
+        </tr>
+      {% endfor %}
+      </tr>
+    </table>
+
+
+
+  {% else %}
+    <h1>Movie not found</h1>
+  {% endif %}
+</body>

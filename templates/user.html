@@ -1,0 +1,127 @@
+<!doctype html>
+<head>
+  <title>User Profile</title>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='sorttable.js') }}"></script>
+</head>
+<body>
+  <a href = "{{ url_for('index') }}">Home<a><p>
+  {% if user %}
+    <h1>Hello User {{ user }}!</h1>
+    <h3>User Profile</h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>User ID</h4></td>
+        <td><h4>Age</h4></td>
+        <td><h4>Gender</h4></td>
+        <td><h4>Job</h4></td>
+        <td><h4>Zipcode</h4></td>
+      </tr>
+      <tr>
+        <td>{{ db.users[user].user_id }}</td>
+        <td>{{ db.users[user].age }}</td>
+        <td>{{ db.users[user].gender }}</td>
+        <td>{{ db.users[user].job }}</td>
+        <td>{{ db.users[user].zipcode }}</td>
+      </tr>
+    </table>
+
+    <h3>Most Similar Users:</h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>User</h4></td>
+        <td><h4>Similarity Score</h4></td>
+        <td><h4>Age</h4></td>
+        <td><h4>Gender</h4></td>
+        <td><h4>Job</h4></td>
+        <td><h4>Zipcode</h4></td>
+
+        {% for user in sim %}
+        <tr>
+          <td><a href="{{ url_for('show_user_profile', user=user[0]) }}">{{ user[0] }}</a></td>
+          <td>{{ user[1] }}</td>
+          <td>{{ db.users[user[0]].age }}</td>
+          <td>{{ db.users[user[0]].gender }}</td>
+          <td>{{ db.users[user[0]].job }}</td>
+          <td>{{ db.users[user[0]].zipcode }}</td>
+
+        </tr>
+      {% endfor %}
+      </tr>
+    </table>
+
+    <h3>Similar Users Like: </h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>Title</h4></td>
+        <td><h4>Suggestion Score</h4></td>
+        <td>Number of Ratings: </td>
+        <td><h4>IMDb Link</h4></td>
+        <td><h4>Release Date</h4></td>
+        <td><h4>Genres</h4></td>
+
+      {% for movie in recs %}
+        <tr>
+          <td><a href="{{ url_for('show_movie', movie=movie[0]) }}">{{ db.movies[movie[0]].movie_title }} </a></td>
+          <td>{{ movie[1] }}</td>
+          <td>{{db.movies[movie[0]].num_ratings }}</td>
+          <td><a href="{{ db.movies[movie[0]].IMDb_URL}}">IMDb Link</a></td>
+          <td>{{ db.movies[movie[0]].release_date }}</td>
+          <td>{{ ', '.join(db.movies[movie[0]].genres) }}</td>
+
+        </tr>
+      {% endfor %}
+      </tr>
+    </table>
+
+    <h3>Most Popular Movies User {{ user }} Hasn't Rated: </h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>Title</h4></td>
+        <td><h4>Average Rating</h4></td>
+        <td><h4>Number of Ratings</h4></td>
+        <td><h4>IMDb Link</h4></td>
+        <td><h4>Release Date</h4></td>
+        <td><h4>Genres</h4></td>
+<!-- {# TODO:Remove movie[0], etc by for looping over .items() for each of them #}-->
+      {% for movie in pop %}
+        <tr>
+          <td><a href="{{ url_for('show_movie', movie=movie[0]) }}">{{ db.movies[movie[0]].movie_title }} </a></td>
+          <td>{{ movie[1] }}</td>
+          <td>{{db.movies[movie[0]].num_ratings }}</td>
+          <td><a href="{{ db.movies[movie[0]].IMDb_URL}}">IMDb Link</a></td>
+          <td>{{ db.movies[movie[0]].release_date }}</td>
+          <td>{{ ', '.join(db.movies[movie[0]].genres) }}</td>
+
+        </tr>
+      {% endfor %}
+      </tr>
+    </table>
+
+
+    <h3>User {{ user }}'s Ratings: </h3>
+    <table class="sortable">
+      <tr>
+        <td><h4>Title</h4></td>
+        <td><h4>Your Rating</h4></td>
+        <td><h4>IMDb Link</h4></td>
+        <td><h4>Release Date</h4></td>
+        <td><h4>Genres</h4></td>
+
+      {% for movie in favs %}
+        <tr>
+          <td><a href="{{ url_for('show_movie', movie=movie[0]) }}">{{ db.movies[movie[0]].movie_title }} </a></td>
+          <td>{{ movie[1] }}</td>
+          <td><a href="{{ db.movies[movie[0]].IMDb_URL}}">IMDb Link</a></td>
+          <td>{{ db.movies[movie[0]].release_date }}</td>
+          <td>{{ ', '.join(db.movies[movie[0]].genres) }}</td>
+        </tr>
+      {% endfor %}
+      </tr>
+    </table>
+
+
+  {% else %}
+    <h1>User not found</h1>
+  {% endif %}
+</body>
