@@ -1,6 +1,7 @@
 #Requirements:
 - Python 3 (3.4 recommended)
 - [Flask](http://flask.pocoo.org/)
+    - Install via 'pip3 install -r requirements.txt'
 
 #Instructions:
 1. Download/clone all files from this repo to your machine

@@ -2,8 +2,10 @@ import csv
 import math
 import pprint
 
+
 class DBError:
     pass
+
 
 # TODO: Add docstrings
 # TODO: Make Recommend object
@@ -24,6 +26,7 @@ class User():
     self.sorted_ratings property
 
     """
+
     def __init__(self, user_id='1', age='24', gender='M', job='technician',
                  zipcode='85711'):
         """
@@ -37,14 +40,14 @@ class User():
         self.ratings = {}
         self.sorted_ratings = []
         self.similar = None
-        #self.movies = []
+        # self.movies = []
 
     @classmethod
     def load_users(cls, filename):
         """
         Takes a csv file containing users and returns a list of User objects
         """
-        fieldnames = ['user_id','age','gender','job', 'zipcode']
+        fieldnames = ['user_id', 'age', 'gender', 'job', 'zipcode']
         users = {}
         with open(filename, encoding="windows-1252") as file:
             reader = csv.DictReader(file, delimiter='|', fieldnames=fieldnames)
@@ -59,10 +62,11 @@ class User():
         Updates an existing list of User objects using ratings from a csv file
         Returns the ubdated list of User objects
         """
-        fieldnames = ['user_id','item_id','rating','timestamp']
+        fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
         # ratings = {}
         with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t', fieldnames=fieldnames)
+            reader = csv.DictReader(file, delimiter='\t',
+                                    fieldnames=fieldnames)
             for row in reader:
                 user_id = row['user_id']
                 item_id = row['item_id']
@@ -72,6 +76,7 @@ class User():
                 except KeyError:
                     assert KeyError("That user_id does not exist")
         return users
+
     @property
     def movies(self):
         """Returns a flat list of all movie_ids for movies this user has rated"""
@@ -79,13 +84,15 @@ class User():
             return [item_id for item_id in self.ratings]
         except:
             assert KeyError("No movies found for this user")
+
     def sort_ratings(self):
         """
         Returns a list of descending sorted movie ratings; also sets instance
         property of sorted_ratings
 
         """
-        sorted_ratings = sorted(self.ratings, key=self.ratings.get, reverse=True)
+        sorted_ratings = sorted(self.ratings, key=self.ratings.get,
+                                reverse=True)
         self.sorted_ratings = sorted_ratings
         return sorted_ratings
 
@@ -98,10 +105,10 @@ class User():
 class Movie():
     item_fieldnames = \
         ['movie_id', 'movie_title', 'release_date', 'video_release_date',
-        'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
-        "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-        'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
-        'Thriller', 'War', 'Western']
+         'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
+         "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
+         'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
+         'Thriller', 'War', 'Western']
 
     def __init__(self, **kwargs):
         for prop, val in kwargs.items():
@@ -112,7 +119,8 @@ class Movie():
     def load_movies(cls, filename):
         movies = {}
         with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='|', fieldnames=Movie.item_fieldnames)
+            reader = csv.DictReader(file, delimiter='|',
+                                    fieldnames=Movie.item_fieldnames)
             for row in reader:
                 movie_id = row.pop('movie_id')
                 movies[movie_id] = Movie(**row)
@@ -120,10 +128,11 @@ class Movie():
 
     @classmethod
     def load_ratings(cls, filename, movies):
-        fieldnames = ['user_id','item_id','rating','timestamp']
-        #ratings = {}
+        fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
+        # ratings = {}
         with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t', fieldnames=fieldnames)
+            reader = csv.DictReader(file, delimiter='\t',
+                                    fieldnames=fieldnames)
             for row in reader:
                 user_id = row['user_id']
                 item_id = row['item_id']
@@ -134,7 +143,7 @@ class Movie():
                     movies[item_id] = Movie(ratings={})
                     movies[item_id].ratings[user_id] = rating
 
-                    #raise KeyError("That movie or user id does not exist")
+                    # raise KeyError("That movie or user id does not exist")
         return movies
 
     @property
@@ -150,20 +159,22 @@ class Movie():
 
     @property
     def avg_rating(self):
-        return sum([int(val) for val in self.ratings.values()]) / len(self.ratings)
+        return sum([int(val) for val in self.ratings.values()]) / len(
+            self.ratings)
 
     @property
     def genres(self):
         all_genres = ['unknown', 'Action', 'Adventure', 'Animation',
-        "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-        'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
-        'Thriller', 'War', 'Western']
+                      "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama',
+                      'Fantasy', 'FilmNoir', 'Horror', 'Musical', 'Mystery',
+                      'Romance', 'SciFi', 'Thriller', 'War', 'Western']
 
         my_genres = []
         for g in all_genres:
             if getattr(self, g, 0) == '1':
                 my_genres.append(g)
         return my_genres
+
 
 class DataBase():
     def __init__(self, users_file, movies_file, ratings_file):
@@ -175,7 +186,7 @@ class DataBase():
         self.users = my_users
         self.movies = my_movies
         self.similarities = None
-        #self.ratings = {}
+        # self.ratings = {}
 
     def top_n(self, n=20, min_n=2, user=None):
         averages = {movie: self.movies[movie].avg_rating
@@ -189,14 +200,16 @@ class DataBase():
             return self.averages[:n]
         else:
             num_ratings = len(self.users[user].ratings)
-            averages = self.averages[:n+num_ratings]
-            averages = [avg for avg in averages if avg[0] not in self.users[user].movies]
+            averages = self.averages[:n + num_ratings]
+            averages = [avg for avg in averages if
+                        avg[0] not in self.users[user].movies]
             return averages[:n]
+
     def intersection(self, me, them):
         v = set(self.users[me].movies)
         w = set(self.users[them].movies)
         return list(v.intersection(w))
-        #return [x for x in self.users[me].movies]
+        # return [x for x in self.users[me].movies]
 
     def euclidean_distance(self, me, other):
         """Given two lists, give the Euclidean distance between them on a scale
@@ -212,8 +225,8 @@ class DataBase():
         w = []
 
         for movie in ixn:
-            #print(repr(movie))
-            #print(self.users[me].ratings[movie])
+            # print(repr(movie))
+            # print(self.users[me].ratings[movie])
             v.append(int(self.users[me].ratings[movie]))
             w.append(int(self.users[other].ratings[movie]))
 
@@ -226,7 +239,8 @@ class DataBase():
         squares = [diff ** 2 for diff in differences]
         sum_of_squares = sum(squares)
 
-        return {'dist': 1 / (1 + math.sqrt(sum_of_squares)), 'num_shared': num_shared}
+        return {'dist': 1 / (1 + math.sqrt(sum_of_squares)),
+                'num_shared': num_shared}
 
     def calculate_similarities(self):
         def calculate_pairings():
@@ -241,7 +255,7 @@ class DataBase():
 
         # for user in calculate_pairings():
         #     print(user)
-        pairings =  calculate_pairings()
+        pairings = calculate_pairings()
 
         self.similarities = {}
 
@@ -250,22 +264,25 @@ class DataBase():
             pair = set(pairing)
             user1 = pair.pop()
             user2 = pair.pop()
-            self.similarities[(user1, user2)] = self.euclidean_distance(user1, user2)
+            self.similarities[(user1, user2)] = self.euclidean_distance(user1,
+                                                                        user2)
 
         return True
 
     def similar(self, me, n=5, min_matches=3):
         rankings = {}
         if self.similarities is None:
-            assert DBError('The similarity scores have not been calculated yet for this database')
+            assert DBError(
+                'The similarity scores have not been calculated yet for this database')
         else:
             for similarity in self.similarities:
                 if me in similarity:
                     not_me = str(list(filter(me.__ne__, similarity))[0])
                     rankings[not_me] = self.similarities[similarity]
         rankings = {user: rankings[user]['dist'] for user in rankings
-                    if rankings[user]['num_shared'] >= n }
-        rankings = sorted(rankings.items(), key=lambda x: x[1], reverse=True)[:n]
+                    if rankings[user]['num_shared'] >= n}
+        rankings = sorted(rankings.items(), key=lambda x: x[1], reverse=True)[
+                   :n]
         self.users[me].similar = rankings
         return rankings
 
@@ -274,17 +291,19 @@ class DataBase():
             return self.movies[movie_id].movie_title
         except:
             return movie_id
+
     def translate(self, data, fn):
         """Returns passed list of 2-tuples with item[0] transformed with fn"""
         return [(fn(item[0]), item[1]) for item in data]
 
-    def recommend(self, user_id, n=5, mode='simple', num_users=1, min_matches=3):
+    def recommend(self, user_id, n=5, mode='simple', num_users=1,
+                  min_matches=3):
         if mode == 'dumb':
             return self.top_n(n=n, min_n=min_matches, user=user_id)
 
         if self.users[user_id].similar == None:
             self.similar(user_id, n=5, min_matches=min_matches)
-        if mode=='simple': # Return top n rated movies from most similar user
+        if mode == 'simple':  # Return top n rated movies from most similar user
             top_matching_users = self.users[user_id].similar[:num_users]
             top_movies = []
             for user, similarity in top_matching_users:
@@ -293,7 +312,8 @@ class DataBase():
                     #        user, similarity, movie, rating))
                     top_movies.append((movie, similarity * int(rating)))
             top_movies.sort(key=lambda x: x[1], reverse=True)
-            filtered = [(movie,score) for movie,score in top_movies if movie not in self.users[user_id].movies]
+            filtered = [(movie, score) for movie, score in top_movies if
+                        movie not in self.users[user_id].movies]
 
             def remove_dupes(a_list):
                 existing = []
@@ -303,14 +323,16 @@ class DataBase():
                         output.append((movie, score))
                 return output
 
-            return filtered[:n] #remove_dupes(filtered)[:n]
+            return filtered[:n]  # remove_dupes(filtered)[:n]
 
 
             # return [self.get_title(mid)
             #         for mid in self.users[top_matching_user].sort_ratings()
             #         if mid not in self.users[user_id].movies
             #         ][:n]
-class Recomendation():
+
+
+class Recommendation():
     """
         This class should hold an individual Recommendation object
         A list of them will be stored in each user object
@@ -322,6 +344,7 @@ class Recomendation():
 
 
     """
+
 
 if __name__ == '__main__':
     db = DataBase(users_file='datasets/ml-100k/uhead.user',
