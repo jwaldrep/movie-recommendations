@@ -23,3 +23,9 @@ to load the first time, in order to build the network of recommendations.
 5. Explore the site to find ratings for movies, movie rankings, and recommendations for each user based on their previous ratings
 
 ######* Note: This application is under development, and uses debug mode and as such, should not be used in a production environment!
+
+
+######Acknowledgements:
+The [MovieLens](http://grouplens.org/datasets/movielens/) data sets used for 
+this project was were collected collected by the [GroupLens Research Project]
+(http://grouplens.org) at the University of Minnesota.
