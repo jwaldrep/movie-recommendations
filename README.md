@@ -29,3 +29,6 @@ to load the first time, in order to build the network of recommendations.
 The [MovieLens](http://grouplens.org/datasets/movielens/) data sets used for 
 this project was were collected collected by the [GroupLens Research Project]
 (http://grouplens.org) at the University of Minnesota.
+
+This work is neither endorsed nor sponsored by the University of Minnesota nor 
+the GroupLens Research Group.
