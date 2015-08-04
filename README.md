@@ -25,10 +25,12 @@ to load the first time, in order to build the network of recommendations.
 ######* Note: This application is under development, and uses debug mode and as such, should not be used in a production environment!
 
 
-######Acknowledgements:
+####Acknowledgements:
 The [MovieLens](http://grouplens.org/datasets/movielens/) data sets used for 
-this project was were collected collected by the [GroupLens Research Project]
+this project were collected by the [GroupLens Research Project]
 (http://grouplens.org) at the University of Minnesota.
 
 This work is neither endorsed nor sponsored by the University of Minnesota nor 
 the GroupLens Research Group.
+
+This project and the provided data are for non-commercial research purposes.
