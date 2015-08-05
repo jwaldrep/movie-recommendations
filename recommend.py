@@ -27,59 +27,65 @@ class User():
 
     """
 
-    def __init__(self, user_id='1', age='24', gender='M', job='technician',
-                 zipcode='85711'):
+    def __init__(self, user_id='1'):#, age='24', gender='M', job='technician',
+                 # zipcode='85711'):
         """
-        Initialize the user object, with empty values to be calulated later
+        Initialize the user object, with empty values to be calculated later
         """
         self.user_id = user_id
-        self.age = age
-        self.gender = gender
-        self.job = job
-        self.zipcode = zipcode
+        # self.age = age
+        # self.gender = gender
+        # self.job = job
+        # self.zipcode = zipcode
         self.ratings = {}
         self.sorted_ratings = []
         self.similar = None
         # self.movies = []
 
-    @classmethod
-    def load_users(cls, filename):
-        """
-        Takes a csv file containing users and returns a list of User objects
-        """
-        fieldnames = ['user_id', 'age', 'gender', 'job', 'zipcode']
-        users = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='|', fieldnames=fieldnames)
-            for row in reader:
-                user_id = row.pop('user_id')
-                users[user_id] = User(**row)
-        return users
+    # @classmethod
+    # def load_users(cls, filename):
+    #     """
+    #     Takes a csv file containing users and returns a list of User objects
+    #     """
+    #     fieldnames = ['user_id', 'age', 'gender', 'job', 'zipcode']
+    #     users = {}
+    #     with open(filename, encoding="windows-1252") as file:
+    #         reader = csv.DictReader(file, delimiter='|', fieldnames=fieldnames)
+    #         for row in reader:
+    #             user_id = row.pop('user_id')
+    #             users[user_id] = User(**row)
+    #     return users
 
     @classmethod
-    def load_ratings(cls, filename, users):
+    def load_ratings(cls, filename):
         """
-        Updates an existing list of User objects using ratings from a csv file
-        Returns the ubdated list of User objects
+        Create a dictionary of User objects using ratings from a csv file
+        Returns the updated list of User objects
         """
-        fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
+        users = {}
+        # fieldnames = ['user_id', 'movie_id', 'rating', 'timestamp']
+        #userId,movieId,rating,timestamp
         # ratings = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t',
-                                    fieldnames=fieldnames)
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',',)
+                                    # fieldnames=fieldnames)
             for row in reader:
-                user_id = row['user_id']
-                item_id = row['item_id']
+                user_id = row['userId']
+                movie_id = row['movieId']
                 rating = row['rating']
                 try:
-                    users[user_id].ratings[item_id] = rating
+                    users[user_id].ratings[movie_id] = rating
                 except KeyError:
-                    assert KeyError("That user_id does not exist")
+                    user = User(user_id=user_id)
+                    users[user_id] = user
+                    users[user_id].ratings[movie_id] = rating
         return users
 
     @property
     def movies(self):
-        """Returns a flat list of all movie_ids for movies this user has rated"""
+        """
+        Returns a flat list of all movie_ids for movies this user has rated
+        """
         try:
             return [item_id for item_id in self.ratings]
         except:
@@ -89,7 +95,6 @@ class User():
         """
         Returns a list of descending sorted movie ratings; also sets instance
         property of sorted_ratings
-
         """
         sorted_ratings = sorted(self.ratings, key=self.ratings.get,
                                 reverse=True)
