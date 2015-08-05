@@ -108,27 +108,33 @@ class User():
 
 
 class Movie():
-    item_fieldnames = \
-        ['movie_id', 'movie_title', 'release_date', 'video_release_date',
-         'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
-         "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-         'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
-         'Thriller', 'War', 'Western']
+    # item_fieldnames = \
+    #     ['movie_id', 'movie_title', 'release_date', 'video_release_date',
+    #      'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
+    #      "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
+    #      'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
+    #      'Thriller', 'War', 'Western']
 
-    def __init__(self, **kwargs):
-        for prop, val in kwargs.items():
-            setattr(self, prop, val)
-        self.ratings = {}
+    # def __init__(self, **kwargs):
+    #     for prop, val in kwargs.items():
+    #         setattr(self, prop, val)
+    #     self.ratings = {}
+    def __init__(self, movie_id, title, genres):
+        self.movie_id = movie_id
+        self.title = title
+        self.genres = genres
 
     @classmethod
     def load_movies(cls, filename):
         movies = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='|',
-                                    fieldnames=Movie.item_fieldnames)
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',')#,
+                                    # fieldnames=Movie.item_fieldnames)
             for row in reader:
-                movie_id = row.pop('movie_id')
-                movies[movie_id] = Movie(**row)
+                movie_id = row['movieId']
+                title = row['title']
+                genres = row['genres'].split('|')
+                movies[movie_id] = Movie(movie_id, title, genres)
         return movies
 
     @classmethod
@@ -167,18 +173,18 @@ class Movie():
         return sum([int(val) for val in self.ratings.values()]) / len(
             self.ratings)
 
-    @property
-    def genres(self):
-        all_genres = ['unknown', 'Action', 'Adventure', 'Animation',
-                      "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama',
-                      'Fantasy', 'FilmNoir', 'Horror', 'Musical', 'Mystery',
-                      'Romance', 'SciFi', 'Thriller', 'War', 'Western']
-
-        my_genres = []
-        for g in all_genres:
-            if getattr(self, g, 0) == '1':
-                my_genres.append(g)
-        return my_genres
+    # @property
+    # def genres(self):
+    #     all_genres = ['unknown', 'Action', 'Adventure', 'Animation',
+    #                   "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama',
+    #                   'Fantasy', 'FilmNoir', 'Horror', 'Musical', 'Mystery',
+    #                   'Romance', 'SciFi', 'Thriller', 'War', 'Western']
+    #
+    #     my_genres = []
+    #     for g in all_genres:
+    #         if getattr(self, g, 0) == '1':
+    #             my_genres.append(g)
+    #     return my_genres
 
 
 class DataBase():

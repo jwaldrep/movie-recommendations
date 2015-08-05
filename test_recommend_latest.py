@@ -46,31 +46,37 @@ def test_user_movies_property():
 
 
 def test_movie_creation():
-    fieldnames = Movie.item_fieldnames
-    values = ['1', 'Toy Story (1995)', '01-Jan-1995', '',
-              'http://us.imdb.com/M/title-exact?Toy%20Story%20(1995)', '0',
-              '0', '0', '1', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0',
-              '0', '0', '0', '0', '0']
-    kwargs = dict(zip(fieldnames, values))
-    movie = Movie(**kwargs)
+    # fieldnames = Movie.item_fieldnames
+    # values = ['1', 'Toy Story (1995)', '01-Jan-1995', '',
+    #           'http://us.imdb.com/M/title-exact?Toy%20Story%20(1995)', '0',
+    #           '0', '0', '1', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0',
+    #           '0', '0', '0', '0', '0']
+    # kwargs = dict(zip(fieldnames, values))
+    # movie = Movie(**kwargs)
+    #1,Toy Story (1995),Adventure|Animation|Children|Comedy|Fantasy
+
+    movie = Movie(movie_id='1', title='Toy Story (1995)',
+                  genres=['Adventure','Animation','Children','Comedy','Fantasy'] )
     assert isinstance(movie, Movie)
     print(dir(movie))
     assert movie.movie_id == '1'
-    assert movie.Animation == '1'
-    assert movie.movie_title == 'Toy Story (1995)'
-    assert movie.Western == '0'
+    assert 'Adventure' in movie.genres
+    assert 'Comedy' in movie.genres
+    assert 'Western' not in movie.genres
+    assert movie.title == 'Toy Story (1995)'
 
 
 def test_load_movies():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    pprint(movies)
-    assert movies['1'].movie_title == 'Toy Story (1995)'
-    assert movies['1'].Animation == '1'
+    movies = Movie.load_movies(MOVIES)
+    # pprint(movies)
+    assert movies['1'].title == 'Toy Story (1995)'
+    assert 'Animation' in movies['1'].genres
 
 
 def test_load_movie_ratings():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
+    # movies = Movie.load_movies('datasets/ml-100k/uhead.item')
+    # movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
+    movies = Movie.load_movies(MOVIES)
     assert len(movies['7'].ratings) == 5
     pprint(movies['7'].ratings)
     assert movies['7'].ratings['9'] == '4'
