@@ -3,9 +3,9 @@ import math
 import pprint
 
 
-RATINGS = "datasets/ml-latest-small/ratings.csv"
-MOVIES = "datasets/ml-latest-small/movies.csv"
-LINKS = "datasets/ml-latest-small/links.csv"
+RATINGS = "dataset/ml-latest-small/ratings.csv"
+MOVIES = "dataset/ml-latest-small/movies.csv"
+LINKS = "dataset/ml-latest-small/links.csv"
 
 
 class DBError(Exception):
