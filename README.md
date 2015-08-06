@@ -1,4 +1,4 @@
-#Movie Recommender (Flask) [![Build Status](https://travis-ci.org/jwaldrep/movie-recommendations.svg?branch=code_refresh)](https://travis-ci.org/jwaldrep/movie-recommendations)
+#Movie Recommender (Flask) [![Build Status](https://travis-ci.org/jwaldrep/movie-recommendations.svg?branch=master)](https://travis-ci.org/jwaldrep/movie-recommendations)
 
 ##Description:
 This is a very simple web app built in Flask, which uses the MoveLens dataset
