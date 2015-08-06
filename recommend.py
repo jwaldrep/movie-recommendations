@@ -283,8 +283,8 @@ class DataBase():
         for movie in ixn:
             # print(repr(movie))
             # print(self.users[me].ratings[movie])
-            v.append(int(self.users[me].ratings[movie]))
-            w.append(int(self.users[other].ratings[movie]))
+            v.append(float(self.users[me].ratings[movie]))
+            w.append(float(self.users[other].ratings[movie]))
 
         # Guard against empty lists.
         if len(v) is 0:

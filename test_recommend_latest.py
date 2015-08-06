@@ -4,7 +4,7 @@ import time
 
 # TODO: Replace data import in unit tests with mock data to separate concerns
 #       and speed up testing
-
+# TODO: Rewrite tests to use unittest
 
 
 def test_data_files_are_present():
@@ -133,13 +133,19 @@ def test_db_creation():
 
 def test_top_n():
     db = load_files()
+    print(db.top_n(n=20, min_n=2, user=None)[0][1])
     assert db.top_n(n=20, min_n=2, user=None)[0][1] == 5.0
-    assert db.top_n(n=20, min_n=20, user=None) == []
+
+    print(db.top_n(n=20, min_n=2000, user=None))
+    assert db.top_n(n=20, min_n=2000, user=None) == []
+    print(len(db.top_n(n=20, min_n=2, user=None)))
     assert len(db.top_n(n=20, min_n=2, user=None)) == 20
-    assert len(db.top_n(n=20, min_n=5, user=None)) == 14
+    print(len(db.top_n(n=100, min_n=200, user=None)))
+    assert len(db.top_n(n=100, min_n=200, user=None)) == 29
     rankings = db.top_n(n=10, min_n=3, user=None)
     last = 5
     for i in rankings:
+        print(last, '>=?', i[1])
         assert last >= i[1]
         last = i[1]
     ### Debug display:
@@ -150,11 +156,12 @@ def test_top_n():
 
 def test_top_n_user():
     db = load_files()
-    unfiltered = db.top_n(n=20, min_n=5, user=None)
+    unfiltered = db.top_n(n=200, min_n=100, user=None)
     tup_list = db.users['1'].movies
     m_list = [m[0] for m in tup_list]
     # print(m_list)
     filtered = db.top_n(n=20, min_n=5, user='1')
+    print('unfiltered: {}, filtered: {}'.format(len(unfiltered), len(filtered)))
     assert len(unfiltered) > len(filtered)
     for (mov, avg) in filtered:
         assert mov not in db.users['1'].movies
@@ -182,10 +189,16 @@ def test_euclidean_distance():
 
 
 def test_num_items_test_files():
+    # 100023 ratings and 2488 tag applications across 8570 movies. These data
+    # were created by 706 users between April 02, 1996 and March 30, 2015
+
     db = load_files()
-    assert len(db.users) == 10
-    assert len(db.users['1'].ratings) == 272
-    assert len(db.movies) == 691
+    print(len(db.users))
+    assert len(db.users) == 706
+    print(len(db.users['1'].ratings))
+    assert len(db.users['1'].ratings) == 227
+    print(len(db.movies))
+    assert len(db.movies) == 8570
 
 
 def test_calculate_similarities():
@@ -193,11 +206,15 @@ def test_calculate_similarities():
     # pairings = db.calculate_similarities()
     # print(pairings, '\n Length: ', len(pairings))
     db.calculate_similarities()
-    pprint(db.similarities)
+    # pprint(db.similarities)
     try:
+        pprint(db.similarities[('9', '8')]['dist'])
+        pprint(db.similarities[('9', '8')]['num_shared'])
         assert db.similarities[('9', '8')]['dist'] - 0.1907 < 0.01
         assert db.similarities[('9', '8')]['num_shared'] == 4
     except:
+        pprint(db.similarities[('8', '9')]['dist'])
+        pprint(db.similarities[('8', '9')]['num_shared'])
         assert db.similarities[('8', '9')]['dist'] - 0.1907 < 0.01
         assert db.similarities[('8', '9')]['num_shared'] == 4
 
@@ -316,9 +333,5 @@ def test_genres():
 #     db = load_files()
 #     assert len(db.users) == 943
 
-"""
-943 users
-1682 items
-100000 ratings
-"""
+
 ##timeit test for db loading speed of full dataset

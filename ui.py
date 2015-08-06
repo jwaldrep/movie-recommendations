@@ -3,9 +3,8 @@ import recommend as r
 
 app = Flask(__name__)
 
-db = r.DataBase(users_file='datasets/ml-100k/u.user',
-                movies_file='datasets/ml-100k/u.item',
-                ratings_file='datasets/ml-100k/u.data')
+db = r.DataBase(movies_file=r.MOVIES,
+                ratings_file=r.RATINGS)
 db.calculate_similarities()
 users = sorted([i for i in db.users], key=int)
 
