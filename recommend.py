@@ -61,6 +61,9 @@ class User():
         """
         Create a dictionary of User objects using ratings from a csv file
         Returns the updated list of User objects
+
+        Expects data header/format of:
+            userId, movieId, rating, timestamp
         """
         users = {}
         # fieldnames = ['user_id', 'movie_id', 'rating', 'timestamp']
@@ -127,6 +130,14 @@ class Movie():
 
     @classmethod
     def load_movies(cls, filename):
+        """
+        Create a dictionary of Movie objects using movie data from a csv file
+        Returns the generated list of Movie objects
+
+        Expects data header/format of:
+            movieId,title,genres
+            with genres being a pipe ('|') separated list
+        """
         movies = {}
         with open(filename, encoding="UTF-8") as file:
             reader = csv.DictReader(file, delimiter=',')#,
@@ -140,6 +151,14 @@ class Movie():
 
     @classmethod
     def load_ratings(cls, filename, movies):
+        """
+        Update the `movies` dictionary of Movie objects using ratings data
+        from a csv file
+        Returns the updated list of Movie objects with ratings
+
+        Expects data header/format of:
+            userId, movieId, rating, timestamp
+        """
         # fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
         # ratings = {}
         # userId,movieId,rating,timestamp
@@ -161,6 +180,7 @@ class Movie():
 
     @property
     def users(self):
+        """Returns a list of all users who have rated this movie"""
         try:
             return [user_id for user_id in self.ratings]
         except:
@@ -168,10 +188,12 @@ class Movie():
 
     @property
     def num_ratings(self):
+        """Returns the total number of ratings for this movie"""
         return len(self.ratings)
 
     @property
     def avg_rating(self):
+        """Returns the average rating for this movie"""
         return sum([float(val) for val in self.ratings.values()]) / len(
             self.ratings)
 
