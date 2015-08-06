@@ -3,7 +3,12 @@ import math
 import pprint
 
 
-class DBError:
+RATINGS = "datasets/ml-latest-small/ratings.csv"
+MOVIES = "datasets/ml-latest-small/movies.csv"
+LINKS = "datasets/ml-latest-small/links.csv"
+
+
+class DBError(Exception):
     pass
 
 
@@ -212,9 +217,16 @@ class Movie():
 
 
 class DataBase():
-    def __init__(self, users_file, movies_file, ratings_file):
-        my_users = User.load_users(users_file)
-        my_users = User.load_ratings(ratings_file, my_users)
+    """
+    An object which holds relationships between users, movies, and ratings
+    """
+    def __init__(self, movies_file, ratings_file):
+        """
+        Requires movie and ratings csv files to initialize
+        User similarities are calculated later through included methods
+        """
+        # my_users = User.load_users(users_file)
+        my_users = User.load_ratings(ratings_file)
         my_movies = Movie.load_movies(movies_file)
         my_movies = Movie.load_ratings(ratings_file, my_movies)
 
@@ -224,6 +236,11 @@ class DataBase():
         # self.ratings = {}
 
     def top_n(self, n=20, min_n=2, user=None):
+        """
+        Returns the top `n` highest rated movies, discarding those with fewer
+        than `min_n` ratings
+        If `user` is defined, only unseen movies for that user are returned
+        """
         averages = {movie: self.movies[movie].avg_rating
                     for movie in self.movies
                     if self.movies[movie].num_ratings >= min_n}
@@ -241,13 +258,17 @@ class DataBase():
             return averages[:n]
 
     def intersection(self, me, them):
+        """
+        Returns list of movies rated by both user `me` and user `them`
+        """
         v = set(self.users[me].movies)
         w = set(self.users[them].movies)
         return list(v.intersection(w))
         # return [x for x in self.users[me].movies]
 
     def euclidean_distance(self, me, other):
-        """Given two lists, give the Euclidean distance between them on a scale
+        """
+        Given two lists, give the Euclidean distance between them on a scale
         of 0 to 1. 1 means the two lists are identical.
         returns dictionary with {distance: and num_shared:}
         """
@@ -278,14 +299,20 @@ class DataBase():
                 'num_shared': num_shared}
 
     def calculate_similarities(self):
+        """
+        Generate self.similarities for all users in the database
+        self.similarities is a dictionary containing the euclidean distance
+        and shared number of movies between a pair of users
+        """
         def calculate_pairings():
+            """Return the set of all unique pairs of users"""
             users = [user_id for user_id in self.users]
 
             pairings = set()
             for user1 in users:
                 for user2 in users:
                     if user1 != user2:
-                        pairings.add(frozenset([user1, user2]))
+                        pairings.add(frozenset([user1, user2])) # Ordered set
             return pairings
 
         # for user in calculate_pairings():
@@ -305,9 +332,13 @@ class DataBase():
         return True
 
     def similar(self, me, n=5, min_matches=3):
+        """
+        Return a sorted list of the n most similar users to user `me`
+        """
+        # TODO: Filter out by min_matches, and add to docstring
         rankings = {}
         if self.similarities is None:
-            assert DBError(
+            raise DBError(
                 'The similarity scores have not been calculated yet for this database')
         else:
             for similarity in self.similarities:
@@ -322,6 +353,10 @@ class DataBase():
         return rankings
 
     def get_title(self, movie_id):
+        """
+        Return title for movie with id of `movie_id`
+        If movie is not in database, return the movie_id
+        """
         try:
             return self.movies[movie_id].movie_title
         except:
@@ -333,6 +368,15 @@ class DataBase():
 
     def recommend(self, user_id, n=5, mode='simple', num_users=1,
                   min_matches=3):
+        """
+        Return `n` recommended movies for user `user_id`, based on `num_users`
+        number of most similar users, when mode == 'simple'
+
+        If mode == 'dumb', simply return the globally highest rated movies not
+        yet seen by `user_id`, ignoring similarity to other users
+
+        min_matches is not yet implemented
+        """
         if mode == 'dumb':
             return self.top_n(n=n, min_n=min_matches, user=user_id)
 
@@ -350,13 +394,14 @@ class DataBase():
             filtered = [(movie, score) for movie, score in top_movies if
                         movie not in self.users[user_id].movies]
 
-            def remove_dupes(a_list):
-                existing = []
-                output = []
-                for movie, score in a_list:
-                    if movie not in existing:
-                        output.append((movie, score))
-                return output
+            # def remove_dupes(a_list):
+            #     """Return `a_list` with duplicate tuples removed"""
+            #     existing = []
+            #     output = []
+            #     for movie, score in a_list:
+            #         if movie not in existing:
+            #             output.append((movie, score))
+            #     return output
 
             return filtered[:n]  # remove_dupes(filtered)[:n]
 
@@ -382,6 +427,5 @@ class Recommendation():
 
 
 if __name__ == '__main__':
-    db = DataBase(users_file='datasets/ml-100k/uhead.user',
-                  movies_file='datasets/ml-100k/uhead.item',
-                  ratings_file='datasets/ml-100k/uhead.data')
+    db = DataBase(movies_file=MOVIES,
+                  ratings_file=RATINGS)

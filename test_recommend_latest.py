@@ -2,10 +2,9 @@ from recommend import *
 from pprint import pprint as pprint
 import time
 
+# TODO: Replace data import in unit tests with mock data to separate concerns
+#       and speed up testing
 
-RATINGS = "datasets/ml-latest-small/ratings.csv"
-MOVIES = "datasets/ml-latest-small/movies.csv"
-LINKS = "datasets/ml-latest-small/links.csv"
 
 
 def test_data_files_are_present():
