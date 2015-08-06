@@ -77,51 +77,53 @@ def test_load_movie_ratings():
     # movies = Movie.load_movies('datasets/ml-100k/uhead.item')
     # movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
     movies = Movie.load_movies(MOVIES)
-    assert len(movies['7'].ratings) == 5
+    movies = Movie.load_ratings(RATINGS, movies)
     pprint(movies['7'].ratings)
-    assert movies['7'].ratings['9'] == '4'
-    # pprint(movies)
-    assert movies['127'].ratings['7'] == '5'
+    assert len(movies['7'].ratings) == 67
+    assert movies['7'].ratings['9'] == '3.0'
+    pprint(movies['100'].ratings)
+    assert movies['100'].ratings['87'] == '4.0'
 
 
 def test_movies_users_property():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    for user_id in ['2', '6', '5', '1']:
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    print(movies['1'].users)
+    for user_id in ['626', '677', '424', '417']:
         assert user_id in movies['1'].users
 
 
 def test_movies_num_ratings():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    assert movies['1'].num_ratings == 4
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    assert movies['1'].num_ratings == 232
 
 
 def test_movies_avg_rating():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    assert movies['7'].avg_rating == 3.6
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    print(movies['7'].avg_rating)
+    assert 3.3 < movies['7'].avg_rating < 3.4
 
 
-def load_files(users_file='datasets/ml-100k/uhead.user',
-               movies_file='datasets/ml-100k/uhead.item',
-               ratings_file='datasets/ml-100k/uhead.data'):
+def load_files(movies_file=MOVIES,
+               ratings_file=RATINGS):
     #     users = User.load_users('datasets/ml-100k/uhead.user')
     #     users = User.load_ratings('datasets/ml-100k/uhead.data', users)
     #     movies = Movie.load_movies('datasets/ml-100k/uhead.item')
     #     movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
     #     return users, movies
-    db = DataBase(users_file=users_file,
-                  movies_file=movies_file,
+    db = DataBase(movies_file=movies_file,
                   ratings_file=ratings_file)
     return db
 
 
 def test_db_creation():
     db = load_files()
-    assert db.users['1'].ratings['113'] == '5'
-    assert db.movies['7'].avg_rating == 3.6
-    assert db.movies['1'].movie_title == 'Toy Story (1995)'
+    assert db.users['1'].ratings['110'] == '4.0'
+    print(db.movies['7'].avg_rating)
+    assert 3.3 < db.movies['7'].avg_rating < 3.4
+    assert db.movies['1'].title == 'Toy Story (1995)'
 
 
 # def test_db_avgs():

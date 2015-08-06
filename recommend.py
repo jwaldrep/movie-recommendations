@@ -89,7 +89,7 @@ class User():
         try:
             return [item_id for item_id in self.ratings]
         except:
-            assert KeyError("No movies found for this user")
+            raise KeyError("No movies found for this user")
 
     def sort_ratings(self):
         """
@@ -123,6 +123,7 @@ class Movie():
         self.movie_id = movie_id
         self.title = title
         self.genres = genres
+        self.ratings = {}
 
     @classmethod
     def load_movies(cls, filename):
@@ -139,20 +140,21 @@ class Movie():
 
     @classmethod
     def load_ratings(cls, filename, movies):
-        fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
+        # fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
         # ratings = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t',
-                                    fieldnames=fieldnames)
+        # userId,movieId,rating,timestamp
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',')#,
+                                    # fieldnames=fieldnames)
             for row in reader:
-                user_id = row['user_id']
-                item_id = row['item_id']
+                user_id = row['userId']
+                movie_id = row['movieId']
                 rating = row['rating']
                 try:
-                    movies[item_id].ratings[user_id] = rating
+                    movies[movie_id].ratings[user_id] = rating
                 except KeyError:
-                    movies[item_id] = Movie(ratings={})
-                    movies[item_id].ratings[user_id] = rating
+                    movies[movie_id] = Movie(ratings={})
+                    movies[movie_id].ratings[user_id] = rating
 
                     # raise KeyError("That movie or user id does not exist")
         return movies
@@ -162,7 +164,7 @@ class Movie():
         try:
             return [user_id for user_id in self.ratings]
         except:
-            assert KeyError("No users found for this movie")
+            raise KeyError("No users found for this movie")
 
     @property
     def num_ratings(self):
@@ -170,7 +172,7 @@ class Movie():
 
     @property
     def avg_rating(self):
-        return sum([int(val) for val in self.ratings.values()]) / len(
+        return sum([float(val) for val in self.ratings.values()]) / len(
             self.ratings)
 
     # @property
