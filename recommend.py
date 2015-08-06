@@ -1,11 +1,15 @@
 import csv
 import math
 import pprint
+import pickle
+import os.path
 
 
 RATINGS = "dataset/ml-latest-small/ratings.csv"
 MOVIES = "dataset/ml-latest-small/movies.csv"
 LINKS = "dataset/ml-latest-small/links.csv"
+
+pickle_path = 'similarities.pkl'
 
 
 class DBError(Exception):
@@ -319,15 +323,21 @@ class DataBase():
         #     print(user)
         pairings = calculate_pairings()
 
-        self.similarities = {}
+        if os.path.isfile(pickle_path):
+            with open(pickle_path, 'rb') as pkl_file:
+                self.similarities = pickle.load(pkl_file)
+        else:
+            self.similarities = {}
 
-        for pairing in pairings:
-            # There must be a better way to do this
-            pair = set(pairing)
-            user1 = pair.pop()
-            user2 = pair.pop()
-            self.similarities[(user1, user2)] = self.euclidean_distance(user1,
-                                                                        user2)
+            for pairing in pairings:
+                # There must be a better way to do this
+                pair = set(pairing)
+                user1 = pair.pop()
+                user2 = pair.pop()
+                self.similarities[(user1, user2)] = self.euclidean_distance(user1,
+                                                                            user2)
+            with open(pickle_path, 'wb') as pkl_file:
+                pickle.dump(self.similarities, pkl_file)
 
         return True
 
