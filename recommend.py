@@ -1,14 +1,25 @@
 import csv
 import math
 import pprint
+import pickle
+import os.path
 
-class DBError:
+
+RATINGS = "dataset/ml-latest-small/ratings.csv"
+MOVIES = "dataset/ml-latest-small/movies.csv"
+LINKS = "dataset/ml-latest-small/links.csv"
+
+pickle_path = 'similarities.pkl'
+
+
+class DBError(Exception):
     pass
+
 
 # TODO: Add docstrings
 # TODO: Make Recommend object
 # TODO: Clean up debug tests
-# TODO: Move to full dataset as default?
+# TODO: Split code into multiple files by class
 
 class User():
     """
@@ -24,68 +35,81 @@ class User():
     self.sorted_ratings property
 
     """
-    def __init__(self, user_id='1', age='24', gender='M', job='technician',
-                 zipcode='85711'):
+
+    def __init__(self, user_id='1'):#, age='24', gender='M', job='technician',
+                 # zipcode='85711'):
         """
-        Initialize the user object, with empty values to be calulated later
+        Initialize the user object, with empty values to be calculated later
         """
         self.user_id = user_id
-        self.age = age
-        self.gender = gender
-        self.job = job
-        self.zipcode = zipcode
+        # self.age = age
+        # self.gender = gender
+        # self.job = job
+        # self.zipcode = zipcode
         self.ratings = {}
         self.sorted_ratings = []
         self.similar = None
-        #self.movies = []
+        # self.movies = []
+
+    # @classmethod
+    # def load_users(cls, filename):
+    #     """
+    #     Takes a csv file containing users and returns a list of User objects
+    #     """
+    #     fieldnames = ['user_id', 'age', 'gender', 'job', 'zipcode']
+    #     users = {}
+    #     with open(filename, encoding="windows-1252") as file:
+    #         reader = csv.DictReader(file, delimiter='|', fieldnames=fieldnames)
+    #         for row in reader:
+    #             user_id = row.pop('user_id')
+    #             users[user_id] = User(**row)
+    #     return users
 
     @classmethod
-    def load_users(cls, filename):
+    def load_ratings(cls, filename):
         """
-        Takes a csv file containing users and returns a list of User objects
+        Create a dictionary of User objects using ratings from a csv file
+        Returns the updated list of User objects
+
+        Expects data header/format of:
+            userId, movieId, rating, timestamp
         """
-        fieldnames = ['user_id','age','gender','job', 'zipcode']
         users = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='|', fieldnames=fieldnames)
-            for row in reader:
-                user_id = row.pop('user_id')
-                users[user_id] = User(**row)
-        return users
-
-    @classmethod
-    def load_ratings(cls, filename, users):
-        """
-        Updates an existing list of User objects using ratings from a csv file
-        Returns the ubdated list of User objects
-        """
-        fieldnames = ['user_id','item_id','rating','timestamp']
+        # fieldnames = ['user_id', 'movie_id', 'rating', 'timestamp']
+        #userId,movieId,rating,timestamp
         # ratings = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t', fieldnames=fieldnames)
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',',)
+                                    # fieldnames=fieldnames)
             for row in reader:
-                user_id = row['user_id']
-                item_id = row['item_id']
+                user_id = row['userId']
+                movie_id = row['movieId']
                 rating = row['rating']
                 try:
-                    users[user_id].ratings[item_id] = rating
+                    users[user_id].ratings[movie_id] = rating
                 except KeyError:
-                    assert KeyError("That user_id does not exist")
+                    user = User(user_id=user_id)
+                    users[user_id] = user
+                    users[user_id].ratings[movie_id] = rating
         return users
+
     @property
     def movies(self):
-        """Returns a flat list of all movie_ids for movies this user has rated"""
+        """
+        Returns a flat list of all movie_ids for movies this user has rated
+        """
         try:
             return [item_id for item_id in self.ratings]
         except:
-            assert KeyError("No movies found for this user")
+            raise KeyError("No movies found for this user")
+
     def sort_ratings(self):
         """
         Returns a list of descending sorted movie ratings; also sets instance
         property of sorted_ratings
-
         """
-        sorted_ratings = sorted(self.ratings, key=self.ratings.get, reverse=True)
+        sorted_ratings = sorted(self.ratings, key=self.ratings.get,
+                                reverse=True)
         self.sorted_ratings = sorted_ratings
         return sorted_ratings
 
@@ -96,88 +120,131 @@ class User():
 
 
 class Movie():
-    item_fieldnames = \
-        ['movie_id', 'movie_title', 'release_date', 'video_release_date',
-        'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
-        "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-        'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
-        'Thriller', 'War', 'Western']
+    # item_fieldnames = \
+    #     ['movie_id', 'movie_title', 'release_date', 'video_release_date',
+    #      'IMDb_URL', 'unknown', 'Action', 'Adventure', 'Animation',
+    #      "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
+    #      'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
+    #      'Thriller', 'War', 'Western']
 
-    def __init__(self, **kwargs):
-        for prop, val in kwargs.items():
-            setattr(self, prop, val)
+    # def __init__(self, **kwargs):
+    #     for prop, val in kwargs.items():
+    #         setattr(self, prop, val)
+    #     self.ratings = {}
+    def __init__(self, movie_id, title, genres):
+        self.movie_id = movie_id
+        self.title = title
+        self.genres = genres
         self.ratings = {}
 
     @classmethod
     def load_movies(cls, filename):
+        """
+        Create a dictionary of Movie objects using movie data from a csv file
+        Returns the generated list of Movie objects
+
+        Expects data header/format of:
+            movieId,title,genres
+            with genres being a pipe ('|') separated list
+        """
         movies = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='|', fieldnames=Movie.item_fieldnames)
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',')#,
+                                    # fieldnames=Movie.item_fieldnames)
             for row in reader:
-                movie_id = row.pop('movie_id')
-                movies[movie_id] = Movie(**row)
+                movie_id = row['movieId']
+                title = row['title']
+                genres = row['genres'].split('|')
+                movies[movie_id] = Movie(movie_id, title, genres)
         return movies
 
     @classmethod
     def load_ratings(cls, filename, movies):
-        fieldnames = ['user_id','item_id','rating','timestamp']
-        #ratings = {}
-        with open(filename, encoding="windows-1252") as file:
-            reader = csv.DictReader(file, delimiter='\t', fieldnames=fieldnames)
+        """
+        Update the `movies` dictionary of Movie objects using ratings data
+        from a csv file
+        Returns the updated list of Movie objects with ratings
+
+        Expects data header/format of:
+            userId, movieId, rating, timestamp
+        """
+        # fieldnames = ['user_id', 'item_id', 'rating', 'timestamp']
+        # ratings = {}
+        # userId,movieId,rating,timestamp
+        with open(filename, encoding="UTF-8") as file:
+            reader = csv.DictReader(file, delimiter=',')#,
+                                    # fieldnames=fieldnames)
             for row in reader:
-                user_id = row['user_id']
-                item_id = row['item_id']
+                user_id = row['userId']
+                movie_id = row['movieId']
                 rating = row['rating']
                 try:
-                    movies[item_id].ratings[user_id] = rating
+                    movies[movie_id].ratings[user_id] = rating
                 except KeyError:
-                    movies[item_id] = Movie(ratings={})
-                    movies[item_id].ratings[user_id] = rating
+                    movies[movie_id] = Movie(ratings={})
+                    movies[movie_id].ratings[user_id] = rating
 
-                    #raise KeyError("That movie or user id does not exist")
+                    # raise KeyError("That movie or user id does not exist")
         return movies
 
     @property
     def users(self):
+        """Returns a list of all users who have rated this movie"""
         try:
             return [user_id for user_id in self.ratings]
         except:
-            assert KeyError("No users found for this movie")
+            raise KeyError("No users found for this movie")
 
     @property
     def num_ratings(self):
+        """Returns the total number of ratings for this movie"""
         return len(self.ratings)
 
     @property
     def avg_rating(self):
-        return sum([int(val) for val in self.ratings.values()]) / len(self.ratings)
+        """Returns the average rating for this movie"""
+        return sum([float(val) for val in self.ratings.values()]) / len(
+            self.ratings)
 
-    @property
-    def genres(self):
-        all_genres = ['unknown', 'Action', 'Adventure', 'Animation',
-        "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
-        'FilmNoir', 'Horror', 'Musical', 'Mystery', 'Romance', 'SciFi',
-        'Thriller', 'War', 'Western']
+    # @property
+    # def genres(self):
+    #     all_genres = ['unknown', 'Action', 'Adventure', 'Animation',
+    #                   "Childrens", 'Comedy', 'Crime', 'Documentary', 'Drama',
+    #                   'Fantasy', 'FilmNoir', 'Horror', 'Musical', 'Mystery',
+    #                   'Romance', 'SciFi', 'Thriller', 'War', 'Western']
+    #
+    #     my_genres = []
+    #     for g in all_genres:
+    #         if getattr(self, g, 0) == '1':
+    #             my_genres.append(g)
+    #     return my_genres
 
-        my_genres = []
-        for g in all_genres:
-            if getattr(self, g, 0) == '1':
-                my_genres.append(g)
-        return my_genres
 
 class DataBase():
-    def __init__(self, users_file, movies_file, ratings_file):
-        my_users = User.load_users(users_file)
-        my_users = User.load_ratings(ratings_file, my_users)
+    """
+    An object which holds relationships between users, movies, and ratings
+    """
+    def __init__(self, movies_file, ratings_file):
+        """
+        Requires movie and ratings csv files to initialize
+        User similarities are calculated later through included methods
+        """
+        # my_users = User.load_users(users_file)
+        my_users = User.load_ratings(ratings_file)
         my_movies = Movie.load_movies(movies_file)
         my_movies = Movie.load_ratings(ratings_file, my_movies)
 
         self.users = my_users
         self.movies = my_movies
         self.similarities = None
-        #self.ratings = {}
+        # self.ratings = {}
 
     def top_n(self, n=20, min_n=2, user=None):
+        """
+        Returns the top `n` highest rated movies, discarding those with fewer
+        than `min_n` ratings
+        If `user` is defined, only unseen movies for that user are returned
+        """
         averages = {movie: self.movies[movie].avg_rating
                     for movie in self.movies
                     if self.movies[movie].num_ratings >= min_n}
@@ -189,17 +256,23 @@ class DataBase():
             return self.averages[:n]
         else:
             num_ratings = len(self.users[user].ratings)
-            averages = self.averages[:n+num_ratings]
-            averages = [avg for avg in averages if avg[0] not in self.users[user].movies]
+            averages = self.averages[:n + num_ratings]
+            averages = [avg for avg in averages if
+                        avg[0] not in self.users[user].movies]
             return averages[:n]
+
     def intersection(self, me, them):
+        """
+        Returns list of movies rated by both user `me` and user `them`
+        """
         v = set(self.users[me].movies)
         w = set(self.users[them].movies)
         return list(v.intersection(w))
-        #return [x for x in self.users[me].movies]
+        # return [x for x in self.users[me].movies]
 
     def euclidean_distance(self, me, other):
-        """Given two lists, give the Euclidean distance between them on a scale
+        """
+        Given two lists, give the Euclidean distance between them on a scale
         of 0 to 1. 1 means the two lists are identical.
         returns dictionary with {distance: and num_shared:}
         """
@@ -212,10 +285,10 @@ class DataBase():
         w = []
 
         for movie in ixn:
-            #print(repr(movie))
-            #print(self.users[me].ratings[movie])
-            v.append(int(self.users[me].ratings[movie]))
-            w.append(int(self.users[other].ratings[movie]))
+            # print(repr(movie))
+            # print(self.users[me].ratings[movie])
+            v.append(float(self.users[me].ratings[movie]))
+            w.append(float(self.users[other].ratings[movie]))
 
         # Guard against empty lists.
         if len(v) is 0:
@@ -226,91 +299,130 @@ class DataBase():
         squares = [diff ** 2 for diff in differences]
         sum_of_squares = sum(squares)
 
-        return {'dist': 1 / (1 + math.sqrt(sum_of_squares)), 'num_shared': num_shared}
+        return {'dist': 1 / (1 + math.sqrt(sum_of_squares)),
+                'num_shared': num_shared}
 
     def calculate_similarities(self):
+        """
+        Generate self.similarities for all users in the database
+        self.similarities is a dictionary containing the euclidean distance
+        and shared number of movies between a pair of users
+        """
         def calculate_pairings():
+            """Return the set of all unique pairs of users"""
             users = [user_id for user_id in self.users]
 
             pairings = set()
             for user1 in users:
                 for user2 in users:
                     if user1 != user2:
-                        pairings.add(frozenset([user1, user2]))
+                        pairings.add(frozenset([user1, user2])) # Ordered set
             return pairings
 
         # for user in calculate_pairings():
         #     print(user)
-        pairings =  calculate_pairings()
+        pairings = calculate_pairings()
 
-        self.similarities = {}
+        if os.path.isfile(pickle_path):
+            with open(pickle_path, 'rb') as pkl_file:
+                self.similarities = pickle.load(pkl_file)
+        else:
+            self.similarities = {}
 
-        for pairing in pairings:
-            # There must be a better way to do this
-            pair = set(pairing)
-            user1 = pair.pop()
-            user2 = pair.pop()
-            self.similarities[(user1, user2)] = self.euclidean_distance(user1, user2)
+            for pairing in pairings:
+                # There must be a better way to do this
+                pair = set(pairing)
+                user1 = pair.pop()
+                user2 = pair.pop()
+                self.similarities[(user1, user2)] = self.euclidean_distance(user1,
+                                                                            user2)
+            with open(pickle_path, 'wb') as pkl_file:
+                pickle.dump(self.similarities, pkl_file)
 
         return True
 
     def similar(self, me, n=5, min_matches=3):
+        """
+        Return a sorted list of the n most similar users to user `me`
+        """
+        # TODO: Filter out by min_matches, and add to docstring
         rankings = {}
         if self.similarities is None:
-            assert DBError('The similarity scores have not been calculated yet for this database')
+            raise DBError(
+                'The similarity scores have not been calculated yet for this database')
         else:
             for similarity in self.similarities:
                 if me in similarity:
                     not_me = str(list(filter(me.__ne__, similarity))[0])
                     rankings[not_me] = self.similarities[similarity]
         rankings = {user: rankings[user]['dist'] for user in rankings
-                    if rankings[user]['num_shared'] >= n }
-        rankings = sorted(rankings.items(), key=lambda x: x[1], reverse=True)[:n]
+                    if rankings[user]['num_shared'] >= n}
+        rankings = sorted(rankings.items(), key=lambda x: x[1], reverse=True)[
+                   :n]
         self.users[me].similar = rankings
         return rankings
 
     def get_title(self, movie_id):
+        """
+        Return title for movie with id of `movie_id`
+        If movie is not in database, return the movie_id
+        """
         try:
-            return self.movies[movie_id].movie_title
+            return self.movies[movie_id].title
         except:
             return movie_id
+
     def translate(self, data, fn):
         """Returns passed list of 2-tuples with item[0] transformed with fn"""
         return [(fn(item[0]), item[1]) for item in data]
 
-    def recommend(self, user_id, n=5, mode='simple', num_users=1, min_matches=3):
+    def recommend(self, user_id, n=5, mode='simple', num_users=1,
+                  min_matches=3):
+        """
+        Return `n` recommended movies for user `user_id`, based on `num_users`
+        number of most similar users, when mode == 'simple'
+
+        If mode == 'dumb', simply return the globally highest rated movies not
+        yet seen by `user_id`, ignoring similarity to other users
+
+        min_matches is not yet implemented
+        """
         if mode == 'dumb':
             return self.top_n(n=n, min_n=min_matches, user=user_id)
 
         if self.users[user_id].similar == None:
             self.similar(user_id, n=5, min_matches=min_matches)
-        if mode=='simple': # Return top n rated movies from most similar user
+        if mode == 'simple':  # Return top n rated movies from most similar user
             top_matching_users = self.users[user_id].similar[:num_users]
             top_movies = []
             for user, similarity in top_matching_users:
                 for movie, rating in self.users[user].ratings.items():
                     # print('user:{}, similarity:{}, movie:{}, rating:{}'.format(
                     #        user, similarity, movie, rating))
-                    top_movies.append((movie, similarity * int(rating)))
+                    top_movies.append((movie, similarity * float(rating)))
             top_movies.sort(key=lambda x: x[1], reverse=True)
-            filtered = [(movie,score) for movie,score in top_movies if movie not in self.users[user_id].movies]
+            filtered = [(movie, score) for movie, score in top_movies if
+                        movie not in self.users[user_id].movies]
 
-            def remove_dupes(a_list):
-                existing = []
-                output = []
-                for movie, score in a_list:
-                    if movie not in existing:
-                        output.append((movie, score))
-                return output
+            # def remove_dupes(a_list):
+            #     """Return `a_list` with duplicate tuples removed"""
+            #     existing = []
+            #     output = []
+            #     for movie, score in a_list:
+            #         if movie not in existing:
+            #             output.append((movie, score))
+            #     return output
 
-            return filtered[:n] #remove_dupes(filtered)[:n]
+            return filtered[:n]  # remove_dupes(filtered)[:n]
 
 
             # return [self.get_title(mid)
             #         for mid in self.users[top_matching_user].sort_ratings()
             #         if mid not in self.users[user_id].movies
             #         ][:n]
-class Recomendation():
+
+
+class Recommendation():
     """
         This class should hold an individual Recommendation object
         A list of them will be stored in each user object
@@ -323,7 +435,7 @@ class Recomendation():
 
     """
 
+
 if __name__ == '__main__':
-    db = DataBase(users_file='datasets/ml-100k/uhead.user',
-                  movies_file='datasets/ml-100k/uhead.item',
-                  ratings_file='datasets/ml-100k/uhead.data')
+    db = DataBase(movies_file=MOVIES,
+                  ratings_file=RATINGS)
