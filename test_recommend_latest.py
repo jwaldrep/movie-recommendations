@@ -2,116 +2,128 @@ from recommend import *
 from pprint import pprint as pprint
 import time
 
+# TODO: Replace data import in unit tests with mock data to separate concerns
+#       and speed up testing
+# TODO: Rewrite tests to use unittest
+# TODO: Split tests into smaller files
+
 
 def test_data_files_are_present():
-    with open("datasets/ml-100k/u.data") as file:
+    with open(RATINGS) as file:
         assert file.readline()
-    with open("datasets/ml-100k/u.item") as file:
+    with open(MOVIES) as file:
         assert file.readline()
-    with open("datasets/ml-100k/u.user") as file:
+    with open(LINKS) as file:
         assert file.readline()
 
 
 def test_user_creation():
-    user = User(user_id='1', age='24', gender='M', job='technician',
-                zipcode='85711')
+    user = User(user_id='1')
     assert isinstance(user, User)
-    assert user.zipcode == '85711'
+    assert user.user_id == '1'
 
 
-def test_load_users():
-    users = User.load_users('datasets/ml-100k/uhead.user')
-    print(users)
-    assert users['1'].job == 'technician'
-    assert users['10'].zipcode == '90703'
+# def test_load_users():
+#     users = User.load_users('datasets/ml-100k/uhead.user')
+#     print(users)
+#     assert users['1'].job == 'technician'
+#     assert users['10'].zipcode == '90703'
 
 
 def test_load_user_ratings():
     # cat u.data ',' egrep "^[1-9]\t" > uhead.data
-    users = User.load_users('datasets/ml-100k/uhead.user')
-    users = User.load_ratings('datasets/ml-100k/uhead.data', users)
-    assert len(users['1'].ratings) == 272
-    assert users['1'].ratings['113'] == '5'
+    # users = User.load_users('datasets/ml-100k/uhead.user')
+    users = User.load_ratings(RATINGS)
+    assert len(users['1'].ratings) == 227
+    assert users['1'].ratings['110'] == '4.0'
 
 
 def test_user_movies_property():
-    users = User.load_users('datasets/ml-100k/uhead.user')
-    users = User.load_ratings('datasets/ml-100k/uhead.data', users)
-    for item_id in ['236', '180', '17']:
-        assert item_id in users['1'].movies
+    # users = User.load_users('datasets/ml-100k/uhead.user')
+    users = User.load_ratings(RATINGS)
+    for movie_id in ['6', '457', '5060']:
+        assert movie_id in users['1'].movies
 
 
 def test_movie_creation():
-    fieldnames = Movie.item_fieldnames
-    values = ['1', 'Toy Story (1995)', '01-Jan-1995', '',
-              'http://us.imdb.com/M/title-exact?Toy%20Story%20(1995)', '0',
-              '0', '0', '1', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0',
-              '0', '0', '0', '0', '0']
-    kwargs = dict(zip(fieldnames, values))
-    movie = Movie(**kwargs)
+    # fieldnames = Movie.item_fieldnames
+    # values = ['1', 'Toy Story (1995)', '01-Jan-1995', '',
+    #           'http://us.imdb.com/M/title-exact?Toy%20Story%20(1995)', '0',
+    #           '0', '0', '1', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0',
+    #           '0', '0', '0', '0', '0']
+    # kwargs = dict(zip(fieldnames, values))
+    # movie = Movie(**kwargs)
+    #1,Toy Story (1995),Adventure|Animation|Children|Comedy|Fantasy
+
+    movie = Movie(movie_id='1', title='Toy Story (1995)',
+                  genres=['Adventure','Animation','Children','Comedy','Fantasy'] )
     assert isinstance(movie, Movie)
     print(dir(movie))
     assert movie.movie_id == '1'
-    assert movie.Animation == '1'
-    assert movie.movie_title == 'Toy Story (1995)'
-    assert movie.Western == '0'
+    assert 'Adventure' in movie.genres
+    assert 'Comedy' in movie.genres
+    assert 'Western' not in movie.genres
+    assert movie.title == 'Toy Story (1995)'
 
 
 def test_load_movies():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    pprint(movies)
-    assert movies['1'].movie_title == 'Toy Story (1995)'
-    assert movies['1'].Animation == '1'
+    movies = Movie.load_movies(MOVIES)
+    # pprint(movies)
+    assert movies['1'].title == 'Toy Story (1995)'
+    assert 'Animation' in movies['1'].genres
 
 
 def test_load_movie_ratings():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    assert len(movies['7'].ratings) == 5
+    # movies = Movie.load_movies('datasets/ml-100k/uhead.item')
+    # movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
     pprint(movies['7'].ratings)
-    assert movies['7'].ratings['9'] == '4'
-    # pprint(movies)
-    assert movies['127'].ratings['7'] == '5'
+    assert len(movies['7'].ratings) == 67
+    assert movies['7'].ratings['9'] == '3.0'
+    pprint(movies['100'].ratings)
+    assert movies['100'].ratings['87'] == '4.0'
 
 
 def test_movies_users_property():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    for user_id in ['2', '6', '5', '1']:
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    print(movies['1'].users)
+    for user_id in ['626', '677', '424', '417']:
         assert user_id in movies['1'].users
 
 
 def test_movies_num_ratings():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    assert movies['1'].num_ratings == 4
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    assert movies['1'].num_ratings == 232
 
 
 def test_movies_avg_rating():
-    movies = Movie.load_movies('datasets/ml-100k/uhead.item')
-    movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
-    assert movies['7'].avg_rating == 3.6
+    movies = Movie.load_movies(MOVIES)
+    movies = Movie.load_ratings(RATINGS, movies)
+    print(movies['7'].avg_rating)
+    assert 3.3 < movies['7'].avg_rating < 3.4
 
 
-def load_files(users_file='datasets/ml-100k/uhead.user',
-               movies_file='datasets/ml-100k/uhead.item',
-               ratings_file='datasets/ml-100k/uhead.data'):
+def load_files(movies_file=MOVIES,
+               ratings_file=RATINGS):
     #     users = User.load_users('datasets/ml-100k/uhead.user')
     #     users = User.load_ratings('datasets/ml-100k/uhead.data', users)
     #     movies = Movie.load_movies('datasets/ml-100k/uhead.item')
     #     movies = Movie.load_ratings('datasets/ml-100k/uhead.data', movies)
     #     return users, movies
-    db = DataBase(users_file=users_file,
-                  movies_file=movies_file,
+    db = DataBase(movies_file=movies_file,
                   ratings_file=ratings_file)
     return db
 
 
 def test_db_creation():
     db = load_files()
-    assert db.users['1'].ratings['113'] == '5'
-    assert db.movies['7'].avg_rating == 3.6
-    assert db.movies['1'].movie_title == 'Toy Story (1995)'
+    assert db.users['1'].ratings['110'] == '4.0'
+    print(db.movies['7'].avg_rating)
+    assert 3.3 < db.movies['7'].avg_rating < 3.4
+    assert db.movies['1'].title == 'Toy Story (1995)'
 
 
 # def test_db_avgs():
@@ -122,13 +134,19 @@ def test_db_creation():
 
 def test_top_n():
     db = load_files()
+    print(db.top_n(n=20, min_n=2, user=None)[0][1])
     assert db.top_n(n=20, min_n=2, user=None)[0][1] == 5.0
-    assert db.top_n(n=20, min_n=20, user=None) == []
+
+    print(db.top_n(n=20, min_n=2000, user=None))
+    assert db.top_n(n=20, min_n=2000, user=None) == []
+    print(len(db.top_n(n=20, min_n=2, user=None)))
     assert len(db.top_n(n=20, min_n=2, user=None)) == 20
-    assert len(db.top_n(n=20, min_n=5, user=None)) == 14
+    print(len(db.top_n(n=100, min_n=200, user=None)))
+    assert len(db.top_n(n=100, min_n=200, user=None)) == 29
     rankings = db.top_n(n=10, min_n=3, user=None)
     last = 5
     for i in rankings:
+        print(last, '>=?', i[1])
         assert last >= i[1]
         last = i[1]
     ### Debug display:
@@ -139,11 +157,12 @@ def test_top_n():
 
 def test_top_n_user():
     db = load_files()
-    unfiltered = db.top_n(n=20, min_n=5, user=None)
+    unfiltered = db.top_n(n=200, min_n=100, user=None)
     tup_list = db.users['1'].movies
     m_list = [m[0] for m in tup_list]
     # print(m_list)
     filtered = db.top_n(n=20, min_n=5, user='1')
+    print('unfiltered: {}, filtered: {}'.format(len(unfiltered), len(filtered)))
     assert len(unfiltered) > len(filtered)
     for (mov, avg) in filtered:
         assert mov not in db.users['1'].movies
@@ -171,10 +190,16 @@ def test_euclidean_distance():
 
 
 def test_num_items_test_files():
+    # 100023 ratings and 2488 tag applications across 8570 movies. These data
+    # were created by 706 users between April 02, 1996 and March 30, 2015
+
     db = load_files()
-    assert len(db.users) == 10
-    assert len(db.users['1'].ratings) == 272
-    assert len(db.movies) == 691
+    print(len(db.users))
+    assert len(db.users) == 706
+    print(len(db.users['1'].ratings))
+    assert len(db.users['1'].ratings) == 227
+    print(len(db.movies))
+    assert len(db.movies) == 8570
 
 
 def test_calculate_similarities():
@@ -182,25 +207,31 @@ def test_calculate_similarities():
     # pairings = db.calculate_similarities()
     # print(pairings, '\n Length: ', len(pairings))
     db.calculate_similarities()
-    pprint(db.similarities)
+    # pprint(db.similarities)
     try:
-        assert db.similarities[('9', '8')]['dist'] - 0.1907 < 0.01
-        assert db.similarities[('9', '8')]['num_shared'] == 4
+        pprint(db.similarities[('9', '8')]['dist'])
+        pprint(db.similarities[('9', '8')]['num_shared'])
+        assert 0.19 < db.similarities[('9', '8')]['dist'] < 0.20
+        assert db.similarities[('9', '8')]['num_shared'] == 23
     except:
-        assert db.similarities[('8', '9')]['dist'] - 0.1907 < 0.01
-        assert db.similarities[('8', '9')]['num_shared'] == 4
+        pprint(db.similarities[('8', '9')]['dist'])
+        pprint(db.similarities[('8', '9')]['num_shared'])
+        assert 0.19 < db.similarities[('8', '9')]['dist'] < 0.20
+        assert db.similarities[('8', '9')]['num_shared'] == 23
 
 
 def test_similar_users():
     db = load_files()
     db.calculate_similarities()
-    assert (db.similar('2', n=5, min_matches=3))[0][0] == '5'
+    print((db.similar('2', n=5, min_matches=3))[0][0])
+    assert (db.similar('2', n=5, min_matches=3))[0][0] == '498'
     print(db.similar('2'))
     assert True
 
 
 def test_get_title():
     db = load_files()
+    print(db.get_title('1'))
     assert db.get_title('1') == 'Toy Story (1995)'
 
 
@@ -208,11 +239,12 @@ def test_sorted_ratings():
     db = load_files()
     srtd_ratings = db.users['1'].sort_ratings()
     print(srtd_ratings)
+    # TODO: Add test_sorted_ratings
     assert True
 
 
 def test_recommend_simple():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     kml = db.recommend('1', n=20, mode='simple')
     pprint(kml)
@@ -227,7 +259,7 @@ def test_recommend_simple():
 
 
 def test_recommend_simple_5_users():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     kml = db.recommend('1', n=20, mode='simple', num_users=5)
     pprint(db.translate(data=kml, fn=db.get_title))
@@ -238,7 +270,7 @@ def test_recommend_simple_5_users():
 
 
 def test_recommend_simple_5_users_removes_dupes():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     rec = db.recommend('5', n=20, mode='simple', num_users=5)
     movie_ids = [i[0] for i in rec]
@@ -251,7 +283,7 @@ def test_recommend_simple_5_users_removes_dupes():
 
 
 def test_sanity_check():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     user = '1'
     db.users[user].sort_ratings()
@@ -294,8 +326,9 @@ def test_full_data_set():
 
 
 def test_genres():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
-    assert db.movies['100'].genres == ['Crime', 'Drama', 'Thriller']
+    db = load_files()
+    print(db.movies['100'].genres)
+    assert db.movies['100'].genres == ['Drama', 'Thriller']
 
 # TODO: Add test that users[user_id].user_id == user_id
 
@@ -305,9 +338,5 @@ def test_genres():
 #     db = load_files()
 #     assert len(db.users) == 943
 
-"""
-943 users
-1682 items
-100000 ratings
-"""
+
 ##timeit test for db loading speed of full dataset

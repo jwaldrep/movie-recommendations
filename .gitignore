@@ -67,3 +67,4 @@ recommend
 .direnv/
 .envrc
 .idea
+*.pkl
