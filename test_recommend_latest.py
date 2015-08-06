@@ -5,6 +5,7 @@ import time
 # TODO: Replace data import in unit tests with mock data to separate concerns
 #       and speed up testing
 # TODO: Rewrite tests to use unittest
+# TODO: Split tests into smaller files
 
 
 def test_data_files_are_present():
@@ -210,25 +211,27 @@ def test_calculate_similarities():
     try:
         pprint(db.similarities[('9', '8')]['dist'])
         pprint(db.similarities[('9', '8')]['num_shared'])
-        assert db.similarities[('9', '8')]['dist'] - 0.1907 < 0.01
-        assert db.similarities[('9', '8')]['num_shared'] == 4
+        assert 0.19 < db.similarities[('9', '8')]['dist'] < 0.20
+        assert db.similarities[('9', '8')]['num_shared'] == 23
     except:
         pprint(db.similarities[('8', '9')]['dist'])
         pprint(db.similarities[('8', '9')]['num_shared'])
-        assert db.similarities[('8', '9')]['dist'] - 0.1907 < 0.01
-        assert db.similarities[('8', '9')]['num_shared'] == 4
+        assert 0.19 < db.similarities[('8', '9')]['dist'] < 0.20
+        assert db.similarities[('8', '9')]['num_shared'] == 23
 
 
 def test_similar_users():
     db = load_files()
     db.calculate_similarities()
-    assert (db.similar('2', n=5, min_matches=3))[0][0] == '5'
+    print((db.similar('2', n=5, min_matches=3))[0][0])
+    assert (db.similar('2', n=5, min_matches=3))[0][0] == '498'
     print(db.similar('2'))
     assert True
 
 
 def test_get_title():
     db = load_files()
+    print(db.get_title('1'))
     assert db.get_title('1') == 'Toy Story (1995)'
 
 
@@ -236,11 +239,12 @@ def test_sorted_ratings():
     db = load_files()
     srtd_ratings = db.users['1'].sort_ratings()
     print(srtd_ratings)
+    # TODO: Add test_sorted_ratings
     assert True
 
 
 def test_recommend_simple():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     kml = db.recommend('1', n=20, mode='simple')
     pprint(kml)
@@ -255,7 +259,7 @@ def test_recommend_simple():
 
 
 def test_recommend_simple_5_users():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     kml = db.recommend('1', n=20, mode='simple', num_users=5)
     pprint(db.translate(data=kml, fn=db.get_title))
@@ -266,7 +270,7 @@ def test_recommend_simple_5_users():
 
 
 def test_recommend_simple_5_users_removes_dupes():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     rec = db.recommend('5', n=20, mode='simple', num_users=5)
     movie_ids = [i[0] for i in rec]
@@ -279,7 +283,7 @@ def test_recommend_simple_5_users_removes_dupes():
 
 
 def test_sanity_check():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
+    db = load_files()
     db.calculate_similarities()
     user = '1'
     db.users[user].sort_ratings()
@@ -322,8 +326,9 @@ def test_full_data_set():
 
 
 def test_genres():
-    db = load_files(movies_file='datasets/ml-100k/u.item')
-    assert db.movies['100'].genres == ['Crime', 'Drama', 'Thriller']
+    db = load_files()
+    print(db.movies['100'].genres)
+    assert db.movies['100'].genres == ['Drama', 'Thriller']
 
 # TODO: Add test that users[user_id].user_id == user_id
 

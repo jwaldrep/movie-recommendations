@@ -19,7 +19,7 @@ class DBError(Exception):
 # TODO: Add docstrings
 # TODO: Make Recommend object
 # TODO: Clean up debug tests
-# TODO: Move to full dataset as default?
+# TODO: Split code into multiple files by class
 
 class User():
     """
@@ -368,7 +368,7 @@ class DataBase():
         If movie is not in database, return the movie_id
         """
         try:
-            return self.movies[movie_id].movie_title
+            return self.movies[movie_id].title
         except:
             return movie_id
 
@@ -399,7 +399,7 @@ class DataBase():
                 for movie, rating in self.users[user].ratings.items():
                     # print('user:{}, similarity:{}, movie:{}, rating:{}'.format(
                     #        user, similarity, movie, rating))
-                    top_movies.append((movie, similarity * int(rating)))
+                    top_movies.append((movie, similarity * float(rating)))
             top_movies.sort(key=lambda x: x[1], reverse=True)
             filtered = [(movie, score) for movie, score in top_movies if
                         movie not in self.users[user_id].movies]
